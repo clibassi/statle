@@ -5,6 +5,12 @@ Playing Wordle, my strategy has been: use one or two words that cover many of th
 
 The resulting program here (not an ado file, just some code you can run and then use the program yourself) takes two arguments, one is a string of all the letters you know, the second is a string of blanks and letters that specify any positions you know. The result is a list of possible combinations of the letters, given the known positions.
 
+The syntax is: 
+
+```
+statle <known letters> <known positions>
+```
+
 Imagine the true 5 letter word is: INCUR. I guess TARES and find only that I know R is in the word. Then I guess CHINO and learn that C and I are in the word at position one (1-indexed). My input to the command would be: 
 
 ```
