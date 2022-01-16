@@ -1,3 +1,4 @@
+capture program drop statle 
 program statle
 
 	clear all 
@@ -5,39 +6,54 @@ program statle
 
 	*Clear out any commas 
 	local no_commas = subinstr("`1'", ",", "", .)
+	local no_spaces = subinstr("`no_commas'", " ", "", .)
 
 	*Get the length of the string free of commas and spaces
-	local len = strlen(subinstr("`no_commas'", " ", "", .)) 
-
+	local len = strlen("`no_spaces'") 
+	
 	*Remove commas and spaces from the position string as well
 	local pos_no_commas = subinstr("`2'", ",", "", .) 
 	local pos_no_spaces = subinstr("`pos_no_commas'", " ", "", .) 
+	
 
 	*Use the length information to insert blanks if not already provided
 	if `len'==1{
 		
-		local no_commas = "`no_commas'" + " _ _ _ _" 
+		local add_spaces = "`no_spaces'" + " _ _ _ _" 
+	
 	}
 
 	else if `len'==2{
 		
-		local no_commas = "`no_commas'" + " _ _ _" 
+		local add_spaces = substr("`no_spaces'", 1, 1) + " " + ///
+			substr("`no_spaces'", 2, 1) + " _ _ _" 
+		
 	}
 
 	else if `len'==3{
 		
-		local no_commas = "`no_commas'" + " _ _" 
+		local add_spaces = substr("`no_spaces'", 1, 1) + " " + ///
+			substr("`no_spaces'", 2, 1) + " " + /// 
+			substr("`no_spaces'", 3, 1) + " _ _" 
+		
 	}
 
 	else if `len'==4{
 		
-		local no_commas = "`no_commas'" + " _" 
-
+		local add_spaces = substr("`no_spaces'", 1, 1) + " " + ///
+			substr("`no_spaces'", 2, 1) + " " + /// 
+			substr("`no_spaces'", 3, 1) + " " + ///
+			substr("`no_spaces'", 4, 1) + " _" 
+		
 	}
 
 	else if `len'==5{
 		
-		local no_commas = "`no_commas'" + " _" 
+		local add_spaces = substr("`no_spaces'", 1, 1) + " " + ///
+			substr("`no_spaces'", 2, 1) + " " + /// 
+			substr("`no_spaces'", 3, 1) + " " + ///
+			substr("`no_spaces'", 4, 1) + " " + ///
+			substr("`no_spaces'", 5, 1) +
 
 	}
 
@@ -69,15 +85,15 @@ program statle
 	local count = 1
 
 	*Loop through all possible combinations of the 5 letters, the dumb way 
-	foreach letter1 of local no_commas{
+	foreach letter1 of local add_spaces{
 		
-		foreach letter2 of local no_commas{
+		foreach letter2 of local add_spaces{
 			
-			foreach letter3 of local no_commas{
+			foreach letter3 of local add_spaces{
 				
-				foreach letter4 of local no_commas{
+				foreach letter4 of local add_spaces{
 					
-					foreach letter5 of local no_commas{
+					foreach letter5 of local add_spaces{
 
 						forvalues i = 1/5{
 							
@@ -99,7 +115,7 @@ program statle
 	}
 
 	*Store a version of the string with no blanks 
-	local no_blanks = subinstr("`no_commas'", "_", "", .)
+	local no_blanks = subinstr("`add_spaces'", "_", "", .)
 
 	*Create a series of dummies to tell us if specific letter is in a specific position
 	foreach letter of local no_blanks{
@@ -119,38 +135,50 @@ program statle
 		
 	}
 
-	/*Loop through all the letters to check the positions of the letter combinations 
-		against the known positions
-	*/
-	foreach letter of local no_blanks{
-		
-		*Initialize a blank variable for storing indicators of out of position letters
-		gen drop_because_of_`letter' = . 
-		*Store the known position of the letter in the submitted string with known locations
-		local let_pos = strpos("`pos_no_spaces'", "`letter'") 
-		*If we don't know the positon of a letter, we pass
-		if `let_pos'==0{
-			
-			di "No position of `letter' determined"
-			
-		}
-		
-		/* If we do know the position of a letter, we check whether the letter is in the 
-			right position by checking the letter of that number against the letter
-			it should be
-		*/
-		else{
-			
-			replace drop_because_of_`letter' = letter`let_pos'!="`letter'"
-			
-		}
+	if "`pos_no_spaces'"=="_____"{
+	    
+		di "No Need to Check Positions!"
 		
 	}
+	
+	else{
+	    
+		/*Loop through all the letters to check the positions of the letter combinations 
+			against the known positions
+		*/
+		foreach letter of local no_blanks{
+			
+			*Initialize a blank variable for storing indicators of out of position letters
+			gen drop_because_of_`letter' = . 
+			*Store the known position of the letter in the submitted string with known locations
+			local let_pos = strpos("`pos_no_spaces'", "`letter'") 
+			*If we don't know the positon of a letter, we pass
+			if `let_pos'==0{
+				
+				di "No position of `letter' determined"
+				
+			}
+			
+			/* If we do know the position of a letter, we check whether the letter is in the 
+				right position by checking the letter of that number against the letter
+				it should be
+			*/
+			else{
+				
+				replace drop_because_of_`letter' = letter`let_pos'!="`letter'"
+				
+			}
+			
+		}
 
-	*Aggregate across the drop indicators to make one single drop indicator
-	egen to_drop = rowmax(drop_*)
-	*Drop the combinations that don't meet the criteria
-	drop if to_drop
+		*Aggregate across the drop indicators to make one single drop indicator
+		egen to_drop = rowmax(drop_*)
+		*Drop the combinations that don't meet the criteria
+		drop if to_drop
+
+		
+	}
+	
 	*Drop all the weird variables we made along the way 
 	drop *_*
 
