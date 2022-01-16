@@ -29,3 +29,4 @@ Note that it is necessary to enclose the two strings in quotes if you put any sp
 statle INR IN___ 
 ```
 
+To run the command, download the do file in this repository. Then run the do file and you will be able to use the statle command in your current Stata session. 
